@@ -16,28 +16,36 @@
 
 # COMMAND ----------
 
-# DBTITLE 1,STEP 1 — Choose your catalog (everything else follows from this)
+# DBTITLE 1,STEP 1 — Your catalog (pre-filled per person — set it in the widget at the top)
 from databricks.sdk.runtime import dbutils, spark
 import re
 
 # ┌───────────────────────────────────────────────────────────────────────────┐
-# │ THE ONE THING TO SET: the `catalog` widget above (default: ml_workshop).    │
-# │ Every notebook in this workshop starts with `%run ./src/00_setup`, so the   │
-# │ catalog you pick here is the catalog all three labs read and write.         │
+# │ WHERE TO SET YOUR CATALOG:                                                  │
+# │   After you run this cell, a **`1. Catalog` widget appears at the very top  │
+# │   of the notebook**. It is PRE-FILLED with your own catalog, named          │
+# │   `workshop_firstname_lastname` from your login. That widget is the ONE     │
+# │   place to change it — every lab does `%run ./src/00_setup`, so whatever    │
+# │   the widget says is where all three labs read and write.                   │
 # │                                                                             │
-# │   • Shared delivery     → leave it as a catalog everyone can write to.      │
-# │   • Isolated per person → set it to your own, e.g. yourname_ml_workshop     │
-# │     (needs CREATE CATALOG, or have an admin pre-create it and grant you).   │
+# │   • Keep the pre-filled value → you get your own isolated sandbox.          │
+# │   • Type a different name      → use a shared/existing catalog instead.     │
 # │                                                                             │
-# │ No Databricks CLI and no asset bundle anywhere in this workshop — you just  │
-# │ open notebooks and Run all.                                                 │
+# │ No Databricks CLI and no asset bundle anywhere — just open notebooks and    │
+# │ Run all.                                                                    │
 # └───────────────────────────────────────────────────────────────────────────┘
-dbutils.widgets.text("catalog",           "ml_workshop", "1. Catalog")
-dbutils.widgets.text("sales_schema",      "sales",        "2. Sales schema")
-dbutils.widgets.text("brewery_schema",    "brewery",      "3. Brewery schema")
-dbutils.widgets.text("volume",            "landing",      "4. Brewery landing volume")
+# Build the per-person default: workshop_<firstname>_<lastname> from your login.
+_user  = spark.sql("SELECT current_user()").collect()[0][0]
+_local = _user.split("@")[0].lower()
+_slug  = re.sub(r"_+", "_", re.sub(r"[^a-z0-9]+", "_", _local)).strip("_")
+_default_catalog = f"workshop_{_slug}" if _slug else "ml_workshop"
 
-CATALOG    = dbutils.widgets.get("catalog").strip()           or "ml_workshop"
+dbutils.widgets.text("catalog",           _default_catalog, "1. Catalog (your sandbox)")
+dbutils.widgets.text("sales_schema",      "sales",          "2. Sales schema")
+dbutils.widgets.text("brewery_schema",    "brewery",        "3. Brewery schema")
+dbutils.widgets.text("volume",            "landing",        "4. Brewery landing volume")
+
+CATALOG    = dbutils.widgets.get("catalog").strip()           or _default_catalog
 SALES      = dbutils.widgets.get("sales_schema").strip()      or "sales"
 BREWERY    = dbutils.widgets.get("brewery_schema").strip()    or "brewery"
 VOLUME     = dbutils.widgets.get("volume").strip()            or "landing"

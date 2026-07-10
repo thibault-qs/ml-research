@@ -17,14 +17,16 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 1 — Choose your catalog & create the workspace
-# MAGIC The **`catalog` widget** that appears at the top after you run the next cell is the single knob
-# MAGIC for the whole workshop. Set it, then re-run. Every lab does `%run ./src/00_setup`, so they all
-# MAGIC land in the catalog you pick here.
+# MAGIC ## Step 1 — Your catalog & workspace
+# MAGIC 👉 **Run the next cell.** A **`1. Catalog` widget then appears at the very top of this
+# MAGIC notebook**, pre-filled with your own catalog **`workshop_firstname_lastname`**. That widget is
+# MAGIC the *only* place you set your catalog — every lab reads it via `%run ./src/00_setup`.
 # MAGIC
-# MAGIC - **Shared delivery** → leave it as a catalog everyone can write to.
-# MAGIC - **Isolated per person** → set it to your own (e.g. `yourname_ml_workshop`). You need
-# MAGIC   `CREATE CATALOG`, or have an admin pre-create it and grant you access.
+# MAGIC - **Keep the pre-filled value** → your own isolated sandbox (created for you).
+# MAGIC - **Type a different name** → use a shared/existing catalog instead.
+# MAGIC
+# MAGIC If you change the widget, **re-run the cell** so the new catalog takes effect. You need
+# MAGIC `CREATE CATALOG` for a brand-new catalog, or have an admin create it and grant you access.
 
 # COMMAND ----------
 

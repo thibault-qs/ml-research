@@ -58,12 +58,13 @@ Everything runs in the workspace UI — no local tooling.
    drips ~150 Sparkplug-B JSON files onto the landing Volume (a couple of minutes) so the Auto Loader
    stream has files to pick up, then **stops on its own** — there's no job to start or cancel.
 
-**Choosing a catalog.** `src/00_setup.py` exposes a **`catalog` widget** (default `ml_workshop`). It's
-the single knob for the whole workshop — every notebook does `%run ./src/00_setup`, so whatever you set
-there is where all three labs read and write.
-- *Shared delivery* → leave it as a catalog everyone can write to.
-- *Isolated per person* → set it to your own (e.g. `yourname_ml_workshop`); you need `CREATE CATALOG`,
-  or have an admin pre-create it and grant you access.
+**Choosing a catalog.** When you run the setup cell, a **`1. Catalog` widget appears at the top of the
+notebook**, pre-filled with your own catalog **`workshop_firstname_lastname`** (from your login). That
+widget is the single place to set it — every notebook does `%run ./src/00_setup`, so whatever it says is
+where all three labs read and write.
+- *Keep the pre-filled value* → your own isolated sandbox (needs `CREATE CATALOG`, or an admin
+  pre-creates it and grants you access).
+- *Type a different name* → use a shared/existing catalog instead.
 
 **Compute.** All lab notebooks run on **standard serverless** — select **environment version 5** in the
 notebook's serverless panel. Lab 3 `%pip install`s `lightgbm` and `statsmodels` (not in the serverless
@@ -94,7 +95,7 @@ or a notebook cell:
 
 ```sql
 -- Drop the catalog and all its data.
-DROP CATALOG IF EXISTS ml_workshop CASCADE;   -- use the catalog name you chose
+DROP CATALOG IF EXISTS workshop_firstname_lastname CASCADE;   -- use the catalog you chose
 ```
 
 ## What's in the folder
