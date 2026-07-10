@@ -8,6 +8,8 @@ result somewhere a non-technical colleague can actually use.
 You don't need prior ML experience. Each step explains *why* you're doing it, and you'll generate
 most of the code by describing what you want to an assistant rather than typing it from scratch.
 
+**Notebooks only — no CLI, no asset bundle.** You run one setup notebook, then the labs. That's it.
+
 ## The setting
 
 You're on the data team at a beverage company. (Everything here is made up — the data is synthetic
@@ -32,7 +34,7 @@ build a pipeline that ingests that stream as it lands, cleans and enriches it, a
 look wrong *before* they trip a hard alarm. This is the unglamorous but essential half of ML: reliably
 getting messy, continuous data into a usable table. You'll learn the **bronze → silver → gold**
 ("medallion") pattern and how **Auto Loader** turns streaming ingestion into a few lines of code.
-→ `lab2_brewery_autoloader.py`
+→ `lab2_brewery_autoloader.py` (and optional `lab2_autoloader_model.py` — train + score an ML model)
 
 **Lab 3 — How much of each product will we sell next quarter?**
 You'll forecast demand three ways, from least to most effort: a one-line built-in function
@@ -43,16 +45,30 @@ ask, in plain English, "what's the forecast for Thirsty Otter in the West?"
 
 The labs build on shared data, so run them in order the first time.
 
-## How the data gets there
+## Getting started
 
-Two background jobs (defined in `databricks.yml`, run through the asset bundle) create the data the
-labs read. You run them once before you start:
+Everything runs in the workspace UI — no local tooling.
 
-- **Data generation job** builds the synthetic sales and brewery-history tables.
-- **Streaming job** drips sensor readings into a storage volume, simulating the live feed Lab 2 picks up.
+1. **Open `00_START_HERE`** and run it top to bottom. It lets you **choose your catalog**, creates the
+   catalog / schemas / landing volume, and **generates the synthetic data** (the two old
+   data-generation jobs are now just two cells here).
+2. **Open each lab** (`lab1…`, `lab2…`, `lab3…`) and run it top to bottom, using **Genie Code**
+   (<kbd>Cmd</kbd>+<kbd>I</kbd>) to generate each step from the prompt provided.
+3. **For Lab 2**, when the lab tells you to, open **`src/write_to_volume.py`** and **Run all**. It
+   drips ~150 Sparkplug-B JSON files onto the landing Volume (a couple of minutes) so the Auto Loader
+   stream has files to pick up, then **stops on its own** — there's no job to start or cancel.
 
-A shared setup file (`src/00_setup.py`) creates the catalog, schemas, and volume, and defines the table
-names every notebook uses — so the labs themselves stay short.
+**Choosing a catalog.** `src/00_setup.py` exposes a **`catalog` widget** (default `ml_workshop`). It's
+the single knob for the whole workshop — every notebook does `%run ./src/00_setup`, so whatever you set
+there is where all three labs read and write.
+- *Shared delivery* → leave it as a catalog everyone can write to.
+- *Isolated per person* → set it to your own (e.g. `yourname_ml_workshop`); you need `CREATE CATALOG`,
+  or have an admin pre-create it and grant you access.
+
+**Compute.** All lab notebooks run on **standard serverless** — select **environment version 5** in the
+notebook's serverless panel. Lab 3 `%pip install`s `lightgbm` and `statsmodels` (not in the serverless
+base); Lab 1 (scikit-learn) and Lab 2 (Auto Loader) need nothing extra. If serverless is disabled in
+your workspace, use a **classic ML Runtime cluster** and `%pip install lightgbm statsmodels` for Lab 3.
 
 ## The "agentic" part
 
@@ -71,69 +87,32 @@ version:
 
 Each lab marks the spots where an assistant does the work.
 
-## Getting started
-
-```bash
-# 1. Connect to your workspace
-databricks auth login --host https://<your-workspace>.cloud.databricks.com --profile ml-workshop
-export DATABRICKS_CONFIG_PROFILE=ml-workshop
-
-# 2. Deploy the bundle (catalog, schemas, jobs, notebooks)
-databricks bundle validate
-databricks bundle deploy
-
-# 3. Build the data (run once)
-databricks bundle run ml_workshop_data_generation
-
-# 4. For Lab 2, start the streaming job and leave it running (it streams continuously
-#    on a small classic cluster). Cancel the run when you finish Lab 2.
-databricks bundle run ml_workshop_streaming --no-wait
-```
-
-Then open each lab notebook in the workspace and run it top to bottom, using Genie Code
-(<kbd>Cmd</kbd>+<kbd>I</kbd>) to generate each step from the prompt provided.
-
-A note on compute: all three lab notebooks run on **standard serverless** — select **environment
-version 5** in the notebook's serverless panel. Lab 3 `%pip install`s `lightgbm` and `statsmodels`
-(they aren't in the serverless base); Lab 1 (scikit-learn) and Lab 2 (Auto Loader) need nothing extra.
-Only the background *streaming job* uses a small classic cluster — it runs a continuous producer loop,
-which isn't a serverless-notebook fit. (GPU serverless / the `databricks_ai_v5` base environment isn't
-needed here — these are CPU workloads.)
-
 ## When you're done
 
-Tear down in two steps:
-
-```bash
-# 1. Remove the deployed jobs and notebooks. Deleting the streaming job also
-#    cancels its continuous run, so nothing keeps billing.
-databricks bundle destroy --auto-approve
-```
-
-The synthetic data is *not* bundle-managed — the notebooks create the catalog when they run — so
-drop it yourself. In a Databricks SQL editor or notebook on the workspace:
+There's nothing deployed outside your catalog, so teardown is one statement. In a Databricks SQL editor
+or a notebook cell:
 
 ```sql
--- 2. Drop the catalog and all its data.
-DROP CATALOG IF EXISTS ml_workshop CASCADE;
+-- Drop the catalog and all its data.
+DROP CATALOG IF EXISTS ml_workshop CASCADE;   -- use the catalog name you chose
 ```
-
-If you started the streaming job and want to stop it *without* a full teardown, just cancel its run
-(`databricks jobs list-runs --job-id <id>` to find it, then `databricks jobs cancel-run <run-id>`).
 
 ## What's in the folder
 
 ```
-lab1_store_sku_recommender.py     Lab 1
-lab2_brewery_autoloader.py        Lab 2
-lab3_ai_forecast.py               Lab 3
+00_START_HERE.py                  ▶ run this first: choose catalog, set up, generate data
+lab1_store_sku_recommender.py     Lab 1 — recommender (classification)
+lab2_brewery_autoloader.py        Lab 2A — Auto Loader + medallion
+lab2_autoloader_model.py          Lab 2B (optional) — train + register + score an ML model
+lab3_ai_forecast.py               Lab 3 — forecasting three ways
 time-series-forecasting.skill.md  forecasting skill to load before Lab 3
-databricks.yml                    asset bundle: variables + the two jobs
 README.md                         you are here
-src/                              supporting source code (run by jobs, %run by labs)
-  00_setup.py                      shared config: catalog, schemas, volume, table names
-  01_generate_sales.py             data-gen job: sales & depletions (Labs 1 and 3)
-  02_generate_brewery_history.py   data-gen job: brewery sensor history (Lab 2)
+src/                              supporting source code (%run by the notebooks above)
+  00_setup.py                      shared config: choose catalog, create schemas/volume, table names
+  01_generate_sales.py             builds sales & depletions tables (Labs 1 and 3)
+  02_generate_brewery_history.py   builds brewery sensor history (Lab 2)
   brewery_generator.py             shared engine that synthesizes the sensor readings
-  write_to_volume.py               streaming job: drips sensor JSON onto the volume (Lab 2 source)
+  write_to_volume.py               run for Lab 2: drips sensor JSON onto the landing Volume
+  dashboards/                      optional AI/BI dashboard (edit the catalog to match yours)
+  queries/                         optional advanced SQL (ai_query scoring)
 ```

@@ -1,7 +1,7 @@
 # Databricks notebook source
 # write_to_volume.py — STREAMING JOB: brewery telemetry producer
 # -----------------------------------------------------------------------------
-# Run as the bundle's streaming job:  databricks bundle run ml_workshop_streaming
+# Run this notebook (Run all) to drip telemetry onto the landing Volume for Lab 2.
 #
 # Emits Sparkplug-B-style JSON micro-batches of brewery telemetry into the UC
 # landing Volume, so Lab 2's Auto Loader stream has new files to pick up. Reuses

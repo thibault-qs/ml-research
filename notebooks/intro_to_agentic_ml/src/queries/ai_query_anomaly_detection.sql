@@ -28,7 +28,7 @@ WITH feat AS (
       THEN (value - avg(value) OVER w) / (stddev(value) OVER w)
       ELSE 0.0
     END AS roll_z
-  FROM ml_workshop.brewery.live_silver_readings
+  FROM ml_workshop.brewery.silver_readings   -- edit catalog if you chose a different one
   WINDOW w AS (
     PARTITION BY tag_id ORDER BY reading_ts
     ROWS BETWEEN 12 PRECEDING AND 1 PRECEDING

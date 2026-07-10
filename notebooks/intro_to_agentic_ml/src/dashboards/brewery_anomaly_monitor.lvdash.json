@@ -7,7 +7,7 @@
         "SELECT\n",
         "  *\n",
         "FROM\n",
-        "  ml_workshop.brewery.live_gold_anomalies"
+        "  ml_workshop.brewery.gold_anomalies"
       ]
     },
     {
@@ -18,7 +18,7 @@
         "  reading_ts,\n",
         "  value\n",
         "FROM\n",
-        "  ml_workshop.brewery.live_silver_readings\n",
+        "  ml_workshop.brewery.silver_readings\n",
         "WHERE\n",
         "  tag_id = 'GLY.GLY01.RETURN_TEMP'\n",
         "ORDER BY\n",
@@ -39,7 +39,7 @@
         "  zscore,\n",
         "  detect_reason\n",
         "FROM\n",
-        "  ml_workshop.brewery.live_gold_anomalies\n",
+        "  ml_workshop.brewery.gold_anomalies\n",
         "ORDER BY\n",
         "  reading_ts DESC\n",
         "LIMIT 20"

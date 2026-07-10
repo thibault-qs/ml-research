@@ -60,25 +60,21 @@ display(spark.sql(f"""
 # COMMAND ----------
 
 # MAGIC %md-sandbox
-# MAGIC ## Step 2 — A streaming job is dropping Sparkplug-B JSON on the Volume
+# MAGIC ## Step 2 — A producer notebook drips Sparkplug-B JSON onto the Volume
 # MAGIC
 # MAGIC <div style="background:#bde6ff; border-radius:8px; padding:12px; margin:10px 0;">
 # MAGIC   <strong>💡 What this simulates:</strong> in production an MQTT broker (Sparkplug B) →
 # MAGIC   cloud-storage bridge drops JSON files into a landing zone. We don't have the broker here, so the
-# MAGIC   bundle's <strong>streaming job</strong> (<code>write_to_volume.py</code>, on a small classic cluster)
-# MAGIC   emits the <em>same JSON shape</em> into the UC Volume — a new file every ~20s — including a
-# MAGIC   <strong>live chiller-drift anomaly</strong> that turns on a few batches in. <strong>Start it now and
-# MAGIC   leave it running</strong> through the lab:
-# MAGIC   <blockquote style="border-left:3px solid #1B5161; margin:8px 0; padding:4px 12px; color:#1B3139;">
-# MAGIC   databricks bundle run ml_workshop_streaming --no-wait
-# MAGIC   </blockquote>
-# MAGIC   Because it runs continuously, each time you re-run the Auto Loader step below it picks up the
-# MAGIC   <em>new</em> files that have landed since. Cancel the job run when you finish Lab 2.
+# MAGIC   producer notebook <code>src/write_to_volume.py</code> (serverless) emits the <em>same JSON shape</em>
+# MAGIC   into the UC Volume — a new file every few seconds — including a <strong>live chiller-drift anomaly</strong>
+# MAGIC   that turns on a few batches in. <strong>Open <code>src/write_to_volume.py</code> and Run all now</strong>,
+# MAGIC   then come back here. It self-terminates after ~150 files (a couple of minutes), so no job to cancel —
+# MAGIC   just re-run it if you want a fresh pass.
 # MAGIC </div>
 
 # COMMAND ----------
 
-# DBTITLE 1,Step 2: Confirm the streaming job is landing files (it's continuous — counts grow)
+# DBTITLE 1,Step 2: Confirm the producer landed files on the Volume
 from pyspark.sql.functions import col, from_unixtime
 
 try:
@@ -87,10 +83,10 @@ except Exception:
     incoming = []
 if not incoming:
     raise RuntimeError(
-        f"No files in {VOLUME_PATH}/incoming yet. Start the streaming job and give it a moment:\n"
-        "  databricks bundle run ml_workshop_streaming --no-wait")
+        f"No files in {VOLUME_PATH}/incoming yet. Open src/write_to_volume.py and Run all first,\n"
+        "then re-run this cell.")
 print(f"{len(incoming)} Sparkplug-B JSON micro-batches landed so far in {VOLUME_PATH}/incoming "
-      "(this keeps growing while the job runs)")
+      "(re-run write_to_volume.py for more)")
 df = spark.createDataFrame(incoming)
 df = df.withColumn("modificationTime_iso", from_unixtime(col("modificationTime")/1000))
 display(df)

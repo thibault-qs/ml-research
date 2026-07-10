@@ -16,19 +16,22 @@
 
 # COMMAND ----------
 
-# DBTITLE 1,Widgets — change the catalog name here to use your own sandbox
+# DBTITLE 1,STEP 1 — Choose your catalog (everything else follows from this)
 from databricks.sdk.runtime import dbutils, spark
 import re
 
-# Single shared catalog by default. For multi-attendee delivery where each person
-# needs isolation, set the `catalog` widget (or --var catalog=...) to e.g.
-# <username>_ml_workshop. The DATA GENERATION notebooks populate the shared
-# read-only tables; lab outputs use CREATE OR REPLACE so re-runs stay clean.
-# Default = the catalog the FEVM pre-provisions for this workspace
-# (`ml_workshop`). On an FEVM the deploying user is workspace admin but
-# NOT metastore admin, so they cannot CREATE CATALOG — but they OWN the
-# pre-provisioned one with ALL PRIVILEGES. The create-catalog step below is
-# therefore guarded.
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ THE ONE THING TO SET: the `catalog` widget above (default: ml_workshop).    │
+# │ Every notebook in this workshop starts with `%run ./src/00_setup`, so the   │
+# │ catalog you pick here is the catalog all three labs read and write.         │
+# │                                                                             │
+# │   • Shared delivery     → leave it as a catalog everyone can write to.      │
+# │   • Isolated per person → set it to your own, e.g. yourname_ml_workshop     │
+# │     (needs CREATE CATALOG, or have an admin pre-create it and grant you).   │
+# │                                                                             │
+# │ No Databricks CLI and no asset bundle anywhere in this workshop — you just  │
+# │ open notebooks and Run all.                                                 │
+# └───────────────────────────────────────────────────────────────────────────┘
 dbutils.widgets.text("catalog",           "ml_workshop", "1. Catalog")
 dbutils.widgets.text("sales_schema",      "sales",        "2. Sales schema")
 dbutils.widgets.text("brewery_schema",    "brewery",      "3. Brewery schema")
@@ -59,8 +62,16 @@ print(f"  brewery volume : {VOLUME}")
 # user IS metastore admin).
 _existing = {r["catalog"] for r in spark.sql("SHOW CATALOGS").collect()}
 if CATALOG not in _existing:
-    spark.sql(f"CREATE CATALOG IF NOT EXISTS {CATALOG}")
-    print(f"Created catalog {CATALOG}")
+    try:
+        spark.sql(f"CREATE CATALOG IF NOT EXISTS {CATALOG}")
+        print(f"Created catalog {CATALOG}")
+    except Exception as e:
+        raise PermissionError(
+            f"Couldn't create catalog '{CATALOG}'.\n"
+            f"  → Either set the 'catalog' widget (STEP 1) to a catalog you can\n"
+            f"    already write to, or ask an admin to create it / grant you\n"
+            f"    CREATE CATALOG, then re-run this notebook.\n"
+            f"  Original error: {e}") from None
 else:
     print(f"Using existing catalog {CATALOG} (no CREATE needed)")
 for sch in (SALES, BREWERY):

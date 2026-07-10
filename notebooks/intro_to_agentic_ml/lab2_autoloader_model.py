@@ -5,7 +5,7 @@
 # ///
 # MAGIC %md-sandbox
 # MAGIC <div style="background:#1B3139; color:white; padding:24px; border-radius:8px;">
-# MAGIC   <h1 style="margin:0; color:white;">Lab 2B — Train an anomaly model & score the live stream</h1>
+# MAGIC   <h1 style="margin:0; color:white;">Lab 2B — Train an anomaly model & score the silver readings</h1>
 # MAGIC   <p style="margin:6px 0 0 0; color:#9EB7BE; font-size:16px;">
 # MAGIC     Persona: <strong style="color:white;">ML Engineer</strong>
 # MAGIC     &nbsp;·&nbsp; Builds on Lab 2A's medallion pipeline
@@ -14,9 +14,8 @@
 # MAGIC
 # MAGIC Lab 2A detected anomalies with **SQL rules** (threshold + rolling z-score). Here we **train a
 # MAGIC simple ML model** (Isolation Forest) on the **historical** readings (`fact_sensor_readings`),
-# MAGIC **log + register it to MLflow / Unity Catalog**, then use it to run **inference on the live
-# MAGIC streamed data** the Auto Loader pipeline is producing (`live_silver_readings`) — the same
-# MAGIC running job, now scored by a registered model.
+# MAGIC **log + register it to MLflow / Unity Catalog**, then use it to run **inference on the
+# MAGIC silver readings** Lab 2A produced (`silver_readings`) — now scored by a registered model.
 # MAGIC
 # MAGIC <div style="background:#F1F1F1; border-left:5px solid #FF3620; padding:15px; margin:15px 0;">
 # MAGIC   <strong>The pattern:</strong> train offline on history → register to UC → load the model and
@@ -112,18 +111,17 @@ print(f"Registered {MODEL_NAME} v{ver} (alias: champion)  ·  run {run_id}")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Step 3 — Inference on the LIVE streamed data
-# MAGIC Load the registered model and score `live_silver_readings` — the table the **running** Auto
-# MAGIC Loader pipeline is filling. We build the *same* features, apply the model as a Spark UDF, and
+# MAGIC ## Step 3 — Inference on the silver readings
+# MAGIC Load the registered model and score `silver_readings` — the table Lab 2A produced. We build the *same* features, apply the model as a Spark UDF, and
 # MAGIC write the model-flagged anomalies to a gold table.
 
 # COMMAND ----------
 
-# DBTITLE 1,Step 3: score the live pipeline output with the registered model
-LIVE_SILVER = brew_t("live_silver_readings")
+# DBTITLE 1,Step 3: score the silver readings with the registered model
+SILVER = brew_t("silver_readings")
 BREW_GOLD_MODEL = brew_t("gold_model_anomalies")
 
-live_feat = add_features(spark.table(LIVE_SILVER)).dropna(subset=FEATURES)
+live_feat = add_features(spark.table(SILVER)).dropna(subset=FEATURES)
 
 predict_udf = mlflow.pyfunc.spark_udf(spark, f"models:/{MODEL_NAME}@champion", result_type="double")
 scored = live_feat.withColumn("anomaly_pred", predict_udf(F.struct(*[F.col(c) for c in FEATURES])))
@@ -134,7 +132,7 @@ model_anoms = (scored.where("anomaly_pred = -1")
                        F.round("roll_z", 2).alias("roll_z"), "anomaly_pred"))
 (model_anoms.write.mode("overwrite").option("overwriteSchema", "true").saveAsTable(BREW_GOLD_MODEL))
 
-n_live = spark.table(LIVE_SILVER).count()
+n_live = spark.table(SILVER).count()
 n_anom = spark.table(BREW_GOLD_MODEL).count()
 print(f"Scored {n_live:,} live readings → {n_anom:,} model-flagged anomalies → {BREW_GOLD_MODEL}")
 display(spark.table(BREW_GOLD_MODEL).orderBy(F.desc("reading_ts")).limit(20))
@@ -185,6 +183,6 @@ else:
 # MAGIC %md
 # MAGIC ## ✅ Wrap-up
 # MAGIC You trained an **Isolation Forest** on the historical readings, **logged + registered it to Unity
-# MAGIC Catalog** (versioned, alias `champion`), then ran **inference on the live pipeline output**,
+# MAGIC Catalog** (versioned, alias `champion`), then ran **inference on the silver readings**,
 # MAGIC writing `gold_model_anomalies`. Same artifact can back a **Model Serving endpoint** (Step 4) for
 # MAGIC real-time scoring — the ML upgrade to Lab 2A's SQL rules.
