@@ -34,14 +34,15 @@ build a pipeline that ingests that stream as it lands, cleans and enriches it, a
 look wrong *before* they trip a hard alarm. This is the unglamorous but essential half of ML: reliably
 getting messy, continuous data into a usable table. You'll learn the **bronze → silver → gold**
 ("medallion") pattern and how **Auto Loader** turns streaming ingestion into a few lines of code.
-→ `lab2_brewery_autoloader.py` (and optional `lab2_autoloader_model.py` — train + score an ML model)
+→ `lab2a_brewery_autoloader.py` (and optional `lab2b_autoloader_model.py` — train + score an ML model)
 
 **Lab 3 — How much of each product will we sell next quarter?**
 You'll forecast demand three ways, from least to most effort: a one-line built-in function
 (`ai_forecast()`), then two models you train yourself and track with **MLflow**. You'll see how to
 compare them fairly and how the winner can quietly improve the answer a business planner gets when they
 ask, in plain English, "what's the forecast for Thirsty Otter in the West?"
-→ `lab3_ai_forecast.py`
+→ **`lab3a_ai_forecast_sql.sql`** (Level 1 — `ai_forecast()`, **pure SQL, on a SQL Serverless warehouse**)
+→ **`lab3b_trained_models.py`** (Levels 2 & 3 — Holt-Winters + LightGBM with MLflow, on a notebook cluster)
 
 The labs build on shared data, so run them in order the first time.
 
@@ -67,9 +68,9 @@ where all three labs read and write.
 - *Type a different name* → use a shared/existing catalog instead.
 
 **Compute.** All lab notebooks run on **standard serverless** — select **environment version 5** in the
-notebook's serverless panel. Lab 3 `%pip install`s `lightgbm` and `statsmodels` (not in the serverless
+notebook's serverless panel. Lab 3B `%pip install`s `lightgbm` and `statsmodels` (not in the serverless
 base); Lab 1 (scikit-learn) and Lab 2 (Auto Loader) need nothing extra. If serverless is disabled in
-your workspace, use a **classic ML Runtime cluster** and `%pip install lightgbm statsmodels` for Lab 3.
+your workspace, use a **classic ML Runtime cluster** and `%pip install lightgbm statsmodels` for Lab 3B.
 
 ## The "agentic" part
 
@@ -83,7 +84,7 @@ version:
   create a function, schedule a job — when you ask it to.
 - **Skills** are short instruction files that teach an assistant how to do a specific thing well. This
   repo ships one: [`time-series-forecasting.skill.md`](time-series-forecasting.skill.md). Load it before
-  Lab 3 so Genie Code follows forecasting best practices (proper train/test splits, naïve baselines,
+  Lab 3B so Genie Code follows forecasting best practices (proper train/test splits, naïve baselines,
   when to leave `ai_forecast` for a real model) instead of guessing.
 
 Each lab marks the spots where an assistant does the work.
@@ -103,10 +104,11 @@ DROP CATALOG IF EXISTS workshop_firstname_lastname CASCADE;   -- use the catalog
 ```
 00_START_HERE.py                  ▶ run this first: choose catalog, set up, generate data
 lab1_store_sku_recommender.py     Lab 1 — recommender (classification)
-lab2_brewery_autoloader.py        Lab 2A — Auto Loader + medallion
-lab2_autoloader_model.py          Lab 2B (optional) — train + register + score an ML model
-lab3_ai_forecast.py               Lab 3 — forecasting three ways
-time-series-forecasting.skill.md  forecasting skill to load before Lab 3
+lab2a_brewery_autoloader.py        Lab 2A — Auto Loader + medallion
+lab2b_autoloader_model.py          Lab 2B (optional) — train + register + score an ML model
+lab3a_ai_forecast_sql.sql          Lab 3A — ai_forecast(), pure SQL (SQL warehouse)
+lab3b_trained_models.py            Lab 3B — Holt-Winters + LightGBM, MLflow (notebook)
+time-series-forecasting.skill.md  forecasting skill to load before Lab 3B
 README.md                         you are here
 src/                              supporting source code (%run by the notebooks above)
   00_setup.py                      shared config: choose catalog, create schemas/volume, table names

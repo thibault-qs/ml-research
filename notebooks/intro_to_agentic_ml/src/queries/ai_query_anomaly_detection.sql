@@ -3,7 +3,7 @@
 -- Score the LIVE brewery stream with the registered Isolation Forest model,
 -- served at the `brewery-anomaly-iforest` Model Serving endpoint, directly from
 -- SQL via ai_query() — no Python, no Spark UDF. Run in a DBSQL / SQL editor once
--- the endpoint is READY (see lab2_autoloader_model.py, Step 4, to deploy it).
+-- the endpoint is READY (see lab2b_autoloader_model.py, Step 4, to deploy it).
 --
 -- Model signature: two tag-normalised features (band_pos, roll_z); the model
 -- returns -1 for an anomaly and 1 for normal (Isolation Forest convention).

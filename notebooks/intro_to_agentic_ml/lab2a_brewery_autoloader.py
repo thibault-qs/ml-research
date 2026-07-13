@@ -37,6 +37,18 @@
 
 # COMMAND ----------
 
+# MAGIC %md-sandbox
+# MAGIC <div style="background:#FFF3CD; border:2px solid #FF3621; border-radius:8px; padding:16px; margin:6px 0;">
+# MAGIC   <h3 style="margin:0 0 6px 0; color:#8A1C0F;">▶ FIRST — start the data producer</h3>
+# MAGIC   This lab reads live files from the landing Volume. <strong>Open
+# MAGIC   <code>src/write_to_volume.py</code> now and click <em>Run all</em></strong> — it drips ~150
+# MAGIC   Sparkplug-B JSON micro-batches onto the Volume (a couple of minutes) and <strong>stops on its
+# MAGIC   own</strong>. Leave it running and come back here. No job to start or cancel.<br><br>
+# MAGIC   <em>Forgot? The check cell below will stop and remind you — nothing breaks.</em>
+# MAGIC </div>
+
+# COMMAND ----------
+
 # MAGIC %run ./src/00_setup
 
 # COMMAND ----------
